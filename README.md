@@ -57,9 +57,9 @@ Giờ thì bắt đầu thôi nào!!
 
 Nhìn đến đây chắc anh em cùng giống mình đang chửi thế thằng viết code. (DM thằng code, layout rắc rối vl) (DragFrame lá cái méo gì thế nhỉ??) (sao phải dùng CollapsingToolbarLayout, AppBarLayout, Toolbar). Nhưng từ từ đã anh em cái gì nó cũng có lý do của nó =))). Mình xin trả lời từ thắc mắc của anh em.
 
-Trước mình cũng chỉ dùng đến hai FrameLayout là frameFirst và frameSecond, nhưng rồi một ngày mình được xem video này [Cấm xem](https://www.youtube.com/watch?v=9RAqdgGXIj0&feature=share) bất ngờ chưa, nó là một video dọc. Là một fan chân chính với nhưng thế loại video nhẹ nhàng, tình cảm như: Anh thợ sửa ống nước may nắm, Cô hàng xóm... à nhầm  Xe đạp, Chờ anh trong con mưa, Quê tôi. Mình mới có cơ hội được xem những video doc và nhận ra rằng với các video đó youtube đã sử dụng cơ chế giống layout_behavior của CoordinatorLayout để có thể tối ưu nội dung bên dưới video (thực ra để nó tối ưu quảng cáo). 
+Trước mình cũng chỉ dùng đến hai FrameLayout là `frameFirst` và `frameSecond`, nhưng rồi một ngày mình được xem video này [Cấm xem](https://www.youtube.com/watch?v=9RAqdgGXIj0&feature=share) bất ngờ chưa, nó là một video dọc. Là một fan chân chính với nhưng thế loại video nhẹ nhàng, tình cảm như: Anh thợ sửa ống nước may nắm, Cô hàng xóm... à nhầm  Xe đạp, Chờ anh trong con mưa, Quê tôi. Mình mới có cơ hội được xem những video doc và nhận ra rằng với các video đó youtube đã sử dụng cơ chế giống layout_behavior của CoordinatorLayout để có thể tối ưu nội dung bên dưới video (thực ra để nó tối ưu quảng cáo). 
 
-(DragFrame lá cái méo gì thế nhỉ??) (sao phải dùng CollapsingToolbarLayout, AppBarLayout, Toolbar): nếu đọc nội dung bên trên thì chắc anh em cũng có câu trả cho mình rồi đúng không, vâng dragFrame là CoordinatorLayout và  CollapsingToolbarLayout, AppBarLayout, Toolbar là để hỗ trợ cho video dọc =))
+(`DragFrame` lá cái méo gì thế nhỉ??) (sao phải dùng `CollapsingToolbarLayout`, `AppBarLayout`, `Toolbar`): nếu đọc nội dung bên trên thì chắc anh em cũng có câu trả cho mình rồi đúng không, vâng `dragFrame` là `CoordinatorLayout` và  `CollapsingToolbarLayout`, `AppBarLayout`, `Toolbar` là để hỗ trợ cho video dọc =))
 
 Layout dựng xong, giờ là lúc phải xử lý chúng =)))
 
@@ -104,7 +104,7 @@ Layout dựng xong, giờ là lúc phải xử lý chúng =)))
         }
 ```
 
-Khi nhắc đến drag thì có hai vấn đề chúng ta cần quan tâm đầu tiên là: chạm vào đâu (ACTION_DOWN) và khi nào di chuyển (ACTION_MOVE). Ở đây mình thiết lập bộ lắng nghe chạm trên frameDrag.
+Khi nhắc đến drag thì có hai vấn đề chúng ta cần quan tâm đầu tiên là: chạm vào đâu (`ACTION_DOWN`) và khi nào di chuyển (`ACTION_MOVE`). Ở đây mình thiết lập bộ lắng nghe chạm trên `frameDrag`.
 
 ACTION_DOWN: 
 ```java
@@ -160,11 +160,11 @@ ACTION_MOVE
         }
 ```
 
-checkFrameFirstMove giúp mình kiểm tra xem người dùng có đang di chuyển frameFirst hay không.
+`checkFrameFirstMove` giúp mình kiểm tra xem người dùng có đang di chuyển `frameFirst` hay không.
 
 ### FrameDrag, ToolBar và AppbarLayout
 
-Ok vậy là chúng ta đã dựng xong bộ drag cho view, giờ là lúc chúng ta phải xử lý giao diện khi người dùng di chuyển frameFirst
+Ok vậy là chúng ta đã dựng xong bộ drag cho view, giờ là lúc chúng ta phải xử lý giao diện khi người dùng di chuyển `frameFirst`
 ```java
         private fun handleMove(motionY: Int) {
             setMarginTop(motionY - deltaY)
@@ -239,12 +239,12 @@ Ok vậy là chúng ta đã dựng xong bộ drag cho view, giờ là lúc chún
         }                   
 ```
 
-Khi người dùng di chuyển mình sẽ tính toán ra % dựa vào marginTop, Từ phần % hiện có mình sẽ tính toán để cập nhật kính thước các view thành phần ở refresh (Cập nhật cho fragDrag và toolbar), refreshFrameFirst (cập nhật cho appbarLayout)
+Khi người dùng di chuyển mình sẽ tính toán ra `%` dựa vào `marginTop`, Từ phần `%` hiện có mình sẽ tính toán để cập nhật kính thước các view thành phần ở `refresh` (Cập nhật cho `FragDrag` và `toolbar`), `refreshFrameFirst` (cập nhật cho `appbarLayout`)
 
 ### FrameFirst, FrameSecond
 
-Sau khi xử lý xong frameDrag, ToolBar và AppbarLayout giờ là lúc xử lý FrameFist và FrameSecond.
-Ở đây chỉ cần tạo một CoordinatorLayout.Behavior và lắng nghe sự thay đổi của AppbarLayout từ đó cập nhật kích thước của FrameFirst là xong 
+Sau khi xử lý xong `FrameDrag`, `ToolBar` và `AppbarLayout` giờ là lúc xử lý `FrameFist` và `FrameSecond`.
+Ở đây chỉ cần tạo một `CoordinatorLayout.Behavior` và lắng nghe sự thay đổi của `AppbarLayout` từ đó cập nhật kích thước của `FrameFirst` là xong 
 ```java
         class DragBehavior(private val frameSecond: View) : CoordinatorLayout.Behavior<View>() {
         
@@ -266,7 +266,7 @@ Sau khi xử lý xong frameDrag, ToolBar và AppbarLayout giờ là lúc xử l�
 
 ### ACTION_UP, ACTION_CANCEL
 
-Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up chúng ta sẽ làm gì. Tại đây mình thực hiện tính toán dựa vào MarginTop để đưa ra ra quyết định nên chuyển về min hay max. Mình xây dựng 3 hàm maximize, minimize, close và dùng SpringAnimation để chuyển về các trạng thái như MAX, MIN, CLOSE
+Sau khi đã hoàn thiện xử lý các thao tác khi `down` mà `move` thì khi `up` chúng ta sẽ làm gì. Tại đây mình thực hiện tính toán dựa vào *MarginTop* để đưa ra ra quyết định nên chuyển về `min` hay `max`. Mình xây dựng 3 hàm `maximize`, `minimize`, `close` và dùng `SpringAnimation` để chuyển về các trạng thái như  `MAX`, `MIN`, `CLOSE`
 
 ```java
 
