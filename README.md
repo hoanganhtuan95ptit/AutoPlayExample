@@ -130,7 +130,7 @@ ACTION_DOWN:
             }
         }
 ```
-isViewUnder Giúp mình phát hiện khi người dùng chạm vào frameDrag người dùng có đang chạm vào frameFirst không
+`isViewUnder` Giúp mình phát hiện khi người dùng chạm vào `frameDrag` người dùng có đang chạm vào `frameFirst` không
 
 ACTION_MOVE
 
