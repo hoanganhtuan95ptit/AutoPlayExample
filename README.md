@@ -162,6 +162,8 @@ ACTION_MOVE
 
 checkFrameFirstMove giúp mình kiểm tra xem người dùng có đang di chuyển frameFirst hay không.
 
+### FrameDrag, ToolBar và AppbarLayout
+
 Ok vậy là chúng ta đã dựng xong bộ drag cho view, giờ là lúc chúng ta phải xử lý giao diện khi người dùng di chuyển frameFirst
 ```java
         private fun handleMove(motionY: Int) {
@@ -237,185 +239,182 @@ Ok vậy là chúng ta đã dựng xong bộ drag cho view, giờ là lúc chún
         }                   
 ```
 
-Khi người dùng di chuyển mình sẽ tính toán ra % dựa vào marginTop, Từ phần % hiện có mình sẽ tính toán để cập nhật kính thước cá view thành phần ở refresh (Cập nhật cho fragDrag và toolbar), refreshFrameFirst (cập nhật cho appbarLayout)
-# Dillinger
+Khi người dùng di chuyển mình sẽ tính toán ra % dựa vào marginTop, Từ phần % hiện có mình sẽ tính toán để cập nhật kính thước các view thành phần ở refresh (Cập nhật cho fragDrag và toolbar), refreshFrameFirst (cập nhật cho appbarLayout)
 
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
+### FrameFirst, FrameSecond
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
+Sau khi xử lý xong frameDrag, ToolBar và AppbarLayout giờ là lúc xử lý FrameFist và FrameSecond.
+Ở đây chỉ cần tạo một CoordinatorLayout.Behavior và lắng nghe sự thay đổi của AppbarLayout từ đó cập nhật kích thước của 
+```java
+        class DragBehavior(private val frameSecond: View) : CoordinatorLayout.Behavior<View>() {
+        
+            override fun layoutDependsOn(parent: CoordinatorLayout, fab: View, dependency: View): Boolean {
+                return true
+            }
+            override fun onDependentViewChanged(parent: CoordinatorLayout, child: View, dependency: View): Boolean {
+                child.reHeight(frameSecond.y.toInt())
+                return true
+            }
+        }
 
-Dillinger is a cloud-enabled, mobile-ready, offline-storage, AngularJS powered HTML5 Markdown editor.
+        ...........................
 
-  - Type some Markdown on the left
-  - See HTML in the right
-  - Magic
-
-# New Features!
-
-  - Import a HTML file and watch it magically convert to Markdown
-  - Drag and drop images (requires your Dropbox account be linked)
-
-
-You can also:
-  - Import and save files from GitHub, Dropbox, Google Drive and One Drive
-  - Drag and drop markdown and HTML files into Dillinger
-  - Export documents as Markdown, HTML and PDF
-
-Markdown is a lightweight markup language based on the formatting conventions that people naturally use in email.  As [John Gruber] writes on the [Markdown site][df1]
-
-> The overriding design goal for Markdown's
-> formatting syntax is to make it as readable
-> as possible. The idea is that a
-> Markdown-formatted document should be
-> publishable as-is, as plain text, without
-> looking like it's been marked up with tags
-> or formatting instructions.
-
-This text you see here is *actually* written in Markdown! To get a feel for Markdown's syntax, type some text into the left window and watch the results in the right.
-
-### Tech
-
-Dillinger uses a number of open source projects to work properly:
-
-* [AngularJS] - HTML enhanced for web apps!
-* [Ace Editor] - awesome web-based text editor
-* [markdown-it] - Markdown parser done right. Fast and easy to extend.
-* [Twitter Bootstrap] - great UI boilerplate for modern web apps
-* [node.js] - evented I/O for the backend
-* [Express] - fast node.js network app framework [@tjholowaychuk]
-* [Gulp] - the streaming build system
-* [Breakdance](https://breakdance.github.io/breakdance/) - HTML to Markdown converter
-* [jQuery] - duh
-
-And of course Dillinger itself is open source with a [public repository][dill]
- on GitHub.
-
-### Installation
-
-Dillinger requires [Node.js](https://nodejs.org/) v4+ to run.
-
-Install the dependencies and devDependencies and start the server.
-
-```sh
-$ cd dillinger
-$ npm install -d
-$ node app
+        val params = frameFirst.layoutParams as CoordinatorLayout.LayoutParams
+        params.behavior = DragBehavior(frameSecond)
+        frameFirst.layoutParams = params
 ```
 
-For production environments...
+### MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL
 
-```sh
-$ npm install --production
-$ NODE_ENV=production node app
+Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up chúng ta sẽ làm gì. tại đây mình thực hiện tính toán dựa vào MarginTop để đưa ra ra quyết định nên chuyển về min hay max .Để tạo hiệu ứng chuyển động thật mình dùng SpringAnimation  
+
+```java
+
+        private fun handleUp() {
+            val moveToMin = if (abs(velocityY) < 200) {
+                mCurrentMarginTop > mMarginTopWhenMin - mCurrentMarginTop
+            } else {
+                velocityY >= 0
+            }
+
+            if (moveToMin) {
+                maxToMinAnim { minimize() }
+            } else {
+                minToMaxAnim { maximize() }
+            }
+        }
+        
+        
+        /**
+         * mở rộng lâyout
+         */
+        open fun maximize() {
+            mTempState = State.MAX
+            if (!frameInitializing) {
+                return
+            }
+            when (mCurrentState) {
+                State.MAX -> {
+                    appbarLayout.resizeAnimation(-1, mTempHeight, 300) {
+                        mHeightWhenMax = mTempHeight
+    
+                        if (mCurrentPercent != 0f || (!needExpand && !showKeyboard)) {
+                            updateState()
+                            return@resizeAnimation
+                        }
+    
+                        appbarLayout.addOnOffsetChangedListener(object : OnOffsetChangedListener {
+                            override fun onOffsetChanged(appBarLayout: AppBarLayout?, verticalOffset: Int) {
+                                if (mCurrentPercent != 0f || !needExpand) {
+                                    appbarLayout.removeOnOffsetChangedListener(this)
+                                    return
+                                }
+    
+                                if (abs(verticalOffset) == 0) {
+                                    updateState()
+    
+                                    needExpand = false
+    
+                                    mDraggableListener?.onExpanded()
+    
+                                    appbarLayout.removeOnOffsetChangedListener(this)
+                                }
+                            }
+                        })
+                        appbarLayout.setExpanded(true, true)
+                    }
+                }
+                State.MIN -> {
+                    minToMaxAnim { maximize() }
+                }
+                State.CLOSE -> {
+                    visible()
+                    closeToMinAnim { maximize() }
+                }
+                else -> {
+                }
+            }
+        }
+    
+        /**
+         * thu nhỏ layout
+         */
+        open fun minimize() {
+            mTempState = State.MIN
+            if (!frameInitializing) {
+                return
+            }
+            when (mCurrentState) {
+                State.MAX -> {
+                    maxToMinAnim { minimize() }
+                }
+                State.MIN -> {
+                    visible()
+                    updateState()
+                }
+                State.CLOSE -> {
+                    visible()
+                    closeToMinAnim { minimize() }
+                }
+                else -> {
+                }
+            }
+        }
+
+        /**
+         * đóng layout
+         */
+        open fun close() {
+            mTempState = State.CLOSE
+            if (!frameInitializing) {
+                return
+            }
+            when (mCurrentState) {
+                State.MAX -> {
+                    maxToMinAnim { close() }
+                }
+                State.MIN -> {
+                    minToCloseAnim { close() }
+                }
+                State.CLOSE -> {
+                    gone()
+                    updateState()
+                }
+                else -> {
+    
+                }
+            }
+        }
+        
+        fun Float.springAnimation(minValue: Float,
+                                  maxValue: Float,
+                                  startValue: Float,
+                                  endValue: Float,
+                                  onUpdate: (Float) -> Unit,
+                                  onEnd: () -> Unit) {
+            val springX = SpringForce(endValue)
+            springX.dampingRatio = 0.7f
+            springX.stiffness = 300f
+            val springAnimation = SpringAnimation(FloatValueHolder())
+            springAnimation.setStartVelocity(this)
+                    .setMinValue(minValue)
+                    .setMaxValue(maxValue)
+                    .setStartValue(startValue)
+                    .setSpring(springX)
+                    .setMinimumVisibleChange(DynamicAnimation.MIN_VISIBLE_CHANGE_PIXELS)
+                    .addUpdateListener { dynamicAnimation: DynamicAnimation<*>, value: Float, _: Float ->
+                        onUpdate(value)
+                        if (value == endValue) {
+                            dynamicAnimation.cancel()
+                        }
+                    }
+                    .addEndListener { _: DynamicAnimation<*>?, _: Boolean, _: Float, _: Float ->
+                        onEnd()
+                    }
+                    .start()
+        }
 ```
 
-### Plugins
+### Kết luận
+Cảm ơn anh em đã đọc đến đoạn này =)), mình hi vọng thư viện sẽ giúp ích cho anh em trong quá trình phát triển các dự án của anh em. Dự án được xây dựng dựa trên nhưng hiểu biết của mình nên sẽ không tránh khỏi nhưng thiếu sót, rất mong anh em góp ý =))). Anh Em vào đây [DraggablePanel](https://github.com/hoanganhtuan95ptit/DraggablePanel) để rate cho mình nhé =)) để mình có động lực làm những dự án open source tiếp theo. Cảm ơn anh em =)))
 
-Dillinger is currently extended with the following plugins. Instructions on how to use them in your own application are linked below.
-
-| Plugin | README |
-| ------ | ------ |
-| Dropbox | [plugins/dropbox/README.md][PlDb] |
-| GitHub | [plugins/github/README.md][PlGh] |
-| Google Drive | [plugins/googledrive/README.md][PlGd] |
-| OneDrive | [plugins/onedrive/README.md][PlOd] |
-| Medium | [plugins/medium/README.md][PlMe] |
-| Google Analytics | [plugins/googleanalytics/README.md][PlGa] |
-
-
-### Development
-
-Want to contribute? Great!
-
-Dillinger uses Gulp + Webpack for fast developing.
-Make a change in your file and instantaneously see your updates!
-
-Open your favorite Terminal and run these commands.
-
-First Tab:
-```sh
-$ node app
-```
-
-Second Tab:
-```sh
-$ gulp watch
-```
-
-(optional) Third:
-```sh
-$ karma test
-```
-#### Building for source
-For production release:
-```sh
-$ gulp build --prod
-```
-Generating pre-built zip archives for distribution:
-```sh
-$ gulp build dist --prod
-```
-### Docker
-Dillinger is very easy to install and deploy in a Docker container.
-
-By default, the Docker will expose port 8080, so change this within the Dockerfile if necessary. When ready, simply use the Dockerfile to build the image.
-
-```sh
-cd dillinger
-docker build -t joemccann/dillinger:${package.json.version} .
-```
-This will create the dillinger image and pull in the necessary dependencies. Be sure to swap out `${package.json.version}` with the actual version of Dillinger.
-
-Once done, run the Docker image and map the port to whatever you wish on your host. In this example, we simply map port 8000 of the host to port 8080 of the Docker (or whatever port was exposed in the Dockerfile):
-
-```sh
-docker run -d -p 8000:8080 --restart="always" <youruser>/dillinger:${package.json.version}
-```
-
-Verify the deployment by navigating to your server address in your preferred browser.
-
-```sh
-127.0.0.1:8000
-```
-
-#### Kubernetes + Google Cloud
-
-See [KUBERNETES.md](https://github.com/joemccann/dillinger/blob/master/KUBERNETES.md)
-
-
-### Todos
-
- - Write MORE Tests
- - Add Night Mode
-
-License
-----
-
-MIT
-
-
-**Free Software, Hell Yeah!**
-
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
-
-
-   [dill]: <https://github.com/joemccann/dillinger>
-   [git-repo-url]: <https://github.com/joemccann/dillinger.git>
-   [john gruber]: <http://daringfireball.net>
-   [df1]: <http://daringfireball.net/projects/markdown/>
-   [markdown-it]: <https://github.com/markdown-it/markdown-it>
-   [Ace Editor]: <http://ace.ajax.org>
-   [node.js]: <http://nodejs.org>
-   [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>
-   [jQuery]: <http://jquery.com>
-   [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
-   [express]: <http://expressjs.com>
-   [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
-
-   [PlDb]: <https://github.com/joemccann/dillinger/tree/master/plugins/dropbox/README.md>
-   [PlGh]: <https://github.com/joemccann/dillinger/tree/master/plugins/github/README.md>
-   [PlGd]: <https://github.com/joemccann/dillinger/tree/master/plugins/googledrive/README.md>
-   [PlOd]: <https://github.com/joemccann/dillinger/tree/master/plugins/onedrive/README.md>
-   [PlMe]: <https://github.com/joemccann/dillinger/tree/master/plugins/medium/README.md>
-   [PlGa]: <https://github.com/RahulHP/dillinger/blob/master/plugins/googleanalytics/README.md>
