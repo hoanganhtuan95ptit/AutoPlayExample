@@ -55,7 +55,7 @@ Giờ thì bắt đầu thôi nào!!
 </merge>
 ```
 
-Nhìn đến đây chắc anh em cùng giống mình đang chửi thế thằng viết code. (DM thằng code, layout rắc rối vl) (DragFrame lá cái méo gì thế nhỉ??) (sao phải dùng CollapsingToolbarLayout, AppBarLayout, Toolbar). Nhưng từ từ đã anh em cái gì nó cũng có lý do của nó =))). Mình xin trả lời từ thắc mắc của các bạn.
+Nhìn đến đây chắc anh em cùng giống mình đang chửi thế thằng viết code. (DM thằng code, layout rắc rối vl) (DragFrame lá cái méo gì thế nhỉ??) (sao phải dùng CollapsingToolbarLayout, AppBarLayout, Toolbar). Nhưng từ từ đã anh em cái gì nó cũng có lý do của nó =))). Mình xin trả lời từ thắc mắc của anh em.
 
 Trước mình cũng chỉ dùng đến hai FrameLayout là frameFirst và frameSecond, nhưng rồi một ngày mình được xem video này [Cấm xem](https://www.youtube.com/watch?v=9RAqdgGXIj0&feature=share) bất ngờ chưa, nó là một video dọc. Là một fan chân chính với nhưng thế loại video nhẹ nhàng, tình cảm như: Anh thợ sửa ống nước may nắm, Cô hàng xóm... à nhầm  Xe đạp, Chờ anh trong con mưa, Quê tôi. Mình mới có cơ hội được xem những video doc và nhận ra rằng với các video đó youtube đã sử dụng cơ chế giống layout_behavior của CoordinatorLayout để có thể tối ưu nội dung bên dưới video (thực ra để nó tối ưu quảng cáo). 
 
@@ -244,7 +244,7 @@ Khi người dùng di chuyển mình sẽ tính toán ra % dựa vào marginTop,
 ### FrameFirst, FrameSecond
 
 Sau khi xử lý xong frameDrag, ToolBar và AppbarLayout giờ là lúc xử lý FrameFist và FrameSecond.
-Ở đây chỉ cần tạo một CoordinatorLayout.Behavior và lắng nghe sự thay đổi của AppbarLayout từ đó cập nhật kích thước của 
+Ở đây chỉ cần tạo một CoordinatorLayout.Behavior và lắng nghe sự thay đổi của AppbarLayout từ đó cập nhật kích thước của FrameFirst là xong 
 ```java
         class DragBehavior(private val frameSecond: View) : CoordinatorLayout.Behavior<View>() {
         
@@ -264,9 +264,9 @@ Sau khi xử lý xong frameDrag, ToolBar và AppbarLayout giờ là lúc xử l�
         frameFirst.layoutParams = params
 ```
 
-### MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL
+### ACTION_UP, ACTION_CANCEL
 
-Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up chúng ta sẽ làm gì. tại đây mình thực hiện tính toán dựa vào MarginTop để đưa ra ra quyết định nên chuyển về min hay max .Để tạo hiệu ứng chuyển động thật mình dùng SpringAnimation  
+Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up chúng ta sẽ làm gì. Tại đây mình thực hiện tính toán dựa vào MarginTop để đưa ra ra quyết định nên chuyển về min hay max. Mình xây dựng 3 hàm maximize, minimize, close và dùng SpringAnimation để chuyển về các trạng thái như MAX, MIN, CLOSE
 
 ```java
 
@@ -415,6 +415,47 @@ Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up
         }
 ```
 
+### Cách dùng
+
+Khi đã dựng xong giờ là lúc dùng chúng, 
+
+```java
+
+        <com.hoanganhtuan95ptit.draggable.DraggablePanel
+                android:id="@+id/draggablePanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:height_when_max="300dp"
+                app:height_when_min="80dp"
+                app:margin_bottom_when_min="8dp"
+                app:margin_edge_when_min="8dp"
+                app:percent_when_middle="0.9"
+                app:state="MIN" />
+        
+        ---------------------------
+        
+        draggablePanel.setDraggableListener(object : DraggablePanel.DraggableListener {
+            override fun onExpanded() {
+                super.onExpanded()
+            }
+
+            override fun onChangeState(state: DraggablePanel.State) {
+            }
+
+            override fun onChangePercent(percent: Float) {
+                alpha.alpha = 1 - percent
+            }
+
+        })
+
+        supportFragmentManager.beginTransaction().add(R.id.frameFirst, TopFragment()).commit()
+        supportFragmentManager.beginTransaction().add(R.id.frameSecond, BottomFragment()).commit()
+
+        btnMax.setOnClickListener { draggablePanel.maximize() }
+        btnMin.setOnClickListener { draggablePanel.minimize() }
+        btnClose.setOnClickListener { draggablePanel.close() }
+```
+
 ### Kết luận
-Cảm ơn anh em đã đọc đến đoạn này =)), mình hi vọng thư viện sẽ giúp ích cho anh em trong quá trình phát triển các dự án của anh em. Dự án được xây dựng dựa trên nhưng hiểu biết của mình nên sẽ không tránh khỏi nhưng thiếu sót, rất mong anh em góp ý =))). Anh Em vào đây [DraggablePanel](https://github.com/hoanganhtuan95ptit/DraggablePanel) để rate cho mình nhé =)) để mình có động lực làm những dự án open source tiếp theo. Cảm ơn anh em =)))
+Cảm ơn anh em đã đọc đến đoạn này, Mình hi vọng thư viện sẽ giúp ích cho anh em trong quá trình phát triển các dự án của anh em. Dự án được xây dựng dựa trên những hiểu biết của mình nên sẽ không tránh khỏi những thiếu sót, rất mong được anh em góp ý =))). Anh Em vào đây [DraggablePanel](https://github.com/hoanganhtuan95ptit/DraggablePanel) để rate cho mình nhé =)) để mình có động lực làm những dự án open source tiếp theo. Cảm ơn anh em =)))
 
