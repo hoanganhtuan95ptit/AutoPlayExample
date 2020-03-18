@@ -415,7 +415,7 @@ Sau khi đã hoàn thiện xử lý các thao tác khi down mà move thì khi up
         }
 ```
 
-### Cách dùng
+### Cách dùng [LINK](https://github.com/hoanganhtuan95ptit/DraggablePanel/blob/master/example/src/main/java/com/hoanganhtuan95ptit/example/NormalActivity.kt)
 
 Khi đã dựng xong giờ là lúc dùng chúng, 
 
